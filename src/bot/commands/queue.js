@@ -1,7 +1,8 @@
 const chains = require('../../../config/chains');
 const { loadPrivateKeys } = require('../../mint/KeyLoader');
 const ParallelMinter = require('../../mint/ParallelMinter');
-const { MintEngine } = require('../../mint/MintEngine');
+const { DropQueue } = require('../../mint/DropQueue');
+const path = require('path');
 
 module.exports = (bot) => {
   bot.command('queue', async (ctx) => {
@@ -25,15 +26,14 @@ module.exports = (bot) => {
       const minter = new ParallelMinter({ rpcUrl, privateKeys });
       const dropInfo = await minter.discover(contract);
       
-      // Create engine only for queue management
-      const engine = new MintEngine({
-        rpcUrl,
-        privateKeys,
-      });
+      // Use DropQueue directly (no need for full MintEngine)
+      const queueFile = path.resolve(process.cwd(), 'drops.json');
+      const queue = new DropQueue(queueFile);
 
-      const drop = engine.addDrop({
+      const id = `${contract.toLowerCase()}_${Date.now()}`;
+      const drop = queue.add({
         contract,
-        startTimeISO: new Date(dropInfo.startTime * 1000).toISOString(),
+        mintTimeISO: new Date(dropInfo.startTime * 1000).toISOString(),
         notes: `Queued via Telegram on ${chainName}`,
       });
 

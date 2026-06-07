@@ -1,20 +1,12 @@
-const { MintEngine } = require('../../mint/MintEngine');
-const { loadPrivateKeys } = require('../../mint/KeyLoader');
-const chains = require('../../../config/chains');
+const { DropQueue } = require('../../mint/DropQueue');
+const path = require('path');
 
 module.exports = (bot) => {
   bot.command('list', async (ctx) => {
     try {
-      // For simplicity, we use a default chain (base) to initialize engine
-      const rpcUrl = chains.base || chains.ethereum;
-      const privateKeys = loadPrivateKeys();
-
-      if (!rpcUrl) {
-        return ctx.reply('❌ No RPC configured');
-      }
-
-      const engine = new MintEngine({ rpcUrl, privateKeys });
-      const drops = engine.listDrops();
+      const queueFile = path.resolve(process.cwd(), 'drops.json');
+      const queue = new DropQueue(queueFile);
+      const drops = queue.list();
 
       if (drops.length === 0) {
         return ctx.reply('No drops queued.');

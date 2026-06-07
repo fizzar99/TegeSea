@@ -1,28 +1,13 @@
-const { MintEngine } = require('../../mint/MintEngine');
-const { loadPrivateKeys } = require('../../mint/KeyLoader');
-const chains = require('../../../config/chains');
-
-// Shared engine instance
-let engineInstance = null;
+const { createEngine, getEngine, setEngine } = require('../engineManager');
 
 module.exports = (bot) => {
   bot.command('auto', async (ctx) => {
-    if (engineInstance) {
+    if (getEngine()) {
       return ctx.reply('⚠️ Monitoring engine is already running.\nUse /stop to stop it first.');
     }
 
     try {
-      const rpcUrl = chains.base || chains.ethereum;
-      const privateKeys = loadPrivateKeys();
-
-      if (privateKeys.length === 0) {
-        return ctx.reply('❌ No private keys found. Use /pk to upload.');
-      }
-
-      // Create engine with alert callbacks
-      engineInstance = new MintEngine({
-        rpcUrl,
-        privateKeys,
+      const engine = createEngine({
         onAlert: (drop) => {
           const timeLeft = Math.floor((drop.mintTime - Date.now()) / 60000);
           bot.telegram.sendMessage(
@@ -41,7 +26,8 @@ module.exports = (bot) => {
         }
       });
 
-      engineInstance.start();
+      setEngine(engine);
+      engine.start();
 
       ctx.reply(
         '🚀 Auto monitoring started!\n\n' +
@@ -53,11 +39,11 @@ module.exports = (bot) => {
     } catch (err) {
       ctx.reply(`❌ Failed to start auto mode: ${err.message}`);
       console.error(err);
-      engineInstance = null;
+      setEngine(null);
     }
   });
 
-  // Export getter for stop command
-  module.exports.getEngine = () => engineInstance;
-  module.exports.setEngine = (engine) => { engineInstance = engine; };
+  // Export for stop command
+  module.exports.getEngine = getEngine;
+  module.exports.setEngine = setEngine;
 };
