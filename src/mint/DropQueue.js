@@ -82,10 +82,130 @@ class DropQueue {
   pruneExpired(beforeMs = Date.now()) {
     const before = this.drops.length;
     this.drops = this.drops.filter(d => {
-      if (d.status === 'fired' || d.status === 'failed') return true;
+      if (["fired", "failed", "expired"].includes(d.status)) return true;
       if (d.mintTime < beforeMs) {
         d.status = 'expired';
-        return true;
+      }
+      return true;
+    });
+    if (this.drops.length !== before) this._save();
+  }
+  pruneExpired(beforeMs = Date.now()) {
+    const before = this.drops.length;
+    this.drops = this.drops.filter(d => {
+      if (["fired", "failed", "expired"].includes(d.status)) return true;
+      if (d.mintTime < beforeMs) {
+        d.status = 'expired';
+      }
+      return true;
+    });
+    if (this.drops.length !== before) this._save();
+  }
+  pruneExpired(beforeMs = Date.now()) {
+    const before = this.drops.length;
+    this.drops = this.drops.filter(d => {
+      if (["fired", "failed", "expired"].includes(d.status)) return true;
+      if (d.mintTime < beforeMs) {
+        d.status = 'expired';
+      }
+      return true;
+    });
+    if (this.drops.length !== before) this._save();
+  }
+  pruneExpired(beforeMs = Date.now()) {
+    const before = this.drops.length;
+    this.drops = this.drops.filter(d => {
+      if (["fired", "failed", "expired"].includes(d.status)) return true;
+      if (d.mintTime < beforeMs) {
+        d.status = 'expired';
+      }
+      return true;
+    });
+    if (this.drops.length !== before) this._save();
+  }
+  pruneExpired(beforeMs = Date.now()) {
+    const before = this.drops.length;
+    this.drops = this.drops.filter(d => {
+      if (["fired", "failed", "expired"].includes(d.status)) return true;
+      if (d.mintTime < beforeMs) {
+        d.status = 'expired';
+      }
+      return true;
+    });
+    if (this.drops.length !== before) this._save();
+  }
+  pruneExpired(beforeMs = Date.now()) {
+    const before = this.drops.length;
+    this.drops = this.drops.filter(d => {
+      if (["fired", "failed", "expired"].includes(d.status)) return true;
+      if (d.mintTime < beforeMs) {
+        d.status = 'expired';
+      }
+      return true;
+    });
+    if (this.drops.length !== before) this._save();
+  }
+  pruneExpired(beforeMs = Date.now()) {
+    const before = this.drops.length;
+    this.drops = this.drops.filter(d => {
+      if (["fired", "failed", "expired"].includes(d.status)) return true;
+      if (d.mintTime < beforeMs) {
+        d.status = 'expired';
+      }
+      return true;
+    });
+    if (this.drops.length !== before) this._save();
+  }
+  pruneExpired(beforeMs = Date.now()) {
+    const before = this.drops.length;
+    this.drops = this.drops.filter(d => {
+      if (["fired", "failed", "expired"].includes(d.status)) return true;
+      if (d.mintTime < beforeMs) {
+        d.status = 'expired';
+      }
+      return true;
+    });
+    if (this.drops.length !== before) this._save();
+  }
+  pruneExpired(beforeMs = Date.now()) {
+    const before = this.drops.length;
+    this.drops = this.drops.filter(d => {
+      if (["fired", "failed", "expired"].includes(d.status)) return true;
+      if (d.mintTime < beforeMs) {
+        d.status = 'expired';
+      }
+      return true;
+    });
+    if (this.drops.length !== before) this._save();
+  }
+  pruneExpired(beforeMs = Date.now()) {
+    const before = this.drops.length;
+    this.drops = this.drops.filter(d => {
+      if (["fired", "failed", "expired"].includes(d.status)) return true;
+      if (d.mintTime < beforeMs) {
+        d.status = 'expired';
+      }
+      return true;
+    });
+    if (this.drops.length !== before) this._save();
+  }
+  pruneExpired(beforeMs = Date.now()) {
+    const before = this.drops.length;
+    this.drops = this.drops.filter(d => {
+      if (["fired", "failed", "expired"].includes(d.status)) return true;
+      if (d.mintTime < beforeMs) {
+        d.status = 'expired';
+      }
+      return true;
+    });
+    if (this.drops.length !== before) this._save();
+  }
+  pruneExpired(beforeMs = Date.now()) {
+    const before = this.drops.length;
+    this.drops = this.drops.filter(d => {
+      if (["fired", "failed", "expired"].includes(d.status)) return true;
+      if (d.mintTime < beforeMs) {
+        d.status = 'expired';
       }
       return true;
     });

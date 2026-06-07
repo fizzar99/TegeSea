@@ -1,6 +1,9 @@
+require('dotenv').config();
+
 const { Telegraf } = require('telegraf');
 const fs = require('fs');
 const path = require('path');
+const axios = require('axios');
 
 const chains = require('../../../config/chains');
 
@@ -9,8 +12,14 @@ const allowedUsers = (process.env.ALLOWED_USERS || '')
   .map(id => parseInt(id.trim()))
   .filter(Boolean);
 
+if (!process.env.TELEGRAM_BOT_TOKEN) {
+  console.error('❌ TELEGRAM_BOT_TOKEN is not set in .env');
+  process.exit(1);
+}
+
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN);
 
+// Whitelist middleware
 bot.use((ctx, next) => {
   const userId = ctx.from?.id;
   if (!allowedUsers.includes(userId)) {
@@ -28,6 +37,7 @@ require('./commands/discover')(bot);
 require('./commands/auto')(bot);
 require('./commands/stop')(bot);
 
+// /start command
 bot.start((ctx) => {
   ctx.reply(
     '🚀 SeaDrop Mint Bot\n\n' +
@@ -43,10 +53,12 @@ bot.start((ctx) => {
   );
 });
 
+// /pk command
 bot.command('pk', async (ctx) => {
   await ctx.reply('Please send your pk.txt file (one private key per line).');
 });
 
+// Handle pk.txt upload
 bot.on('document', async (ctx) => {
   if (ctx.message.document.file_name !== 'pk.txt') {
     return ctx.reply('❌ Please send a file named pk.txt');
@@ -54,8 +66,8 @@ bot.on('document', async (ctx) => {
 
   try {
     const fileLink = await ctx.telegram.getFileLink(ctx.message.document.file_id);
-    const response = await fetch(fileLink);
-    const content = await response.text();
+    const response = await axios.get(fileLink, { responseType: 'text' });
+    const content = response.data;
 
     const pkPath = path.join(process.cwd(), 'pk.txt');
     fs.writeFileSync(pkPath, content);
@@ -65,6 +77,12 @@ bot.on('document', async (ctx) => {
     ctx.reply('❌ Failed to save private keys.');
     console.error(err);
   }
+});
+
+// Global error handler
+bot.catch((err, ctx) => {
+  console.error(`[Bot Error] ${ctx.updateType}:`, err);
+  ctx.reply('❌ An unexpected error occurred.').catch(() => {});
 });
 
 bot.launch();
