@@ -1,4 +1,4 @@
-# SeaDrop Telegram Bot
+# TegeSea
 
 Telegram bot for SeaDrop NFT minting engine. Supports multiple EVM chains with automatic discovery and parallel minting.
 
@@ -11,36 +11,45 @@ Telegram bot for SeaDrop NFT minting engine. Supports multiple EVM chains with a
 - **Private key management** — Upload `pk.txt` directly via Telegram (`/pk`)
 - **Whitelist protection** — Only allowed users can use the bot
 
-## Project Structure
+## Dependencies
 
+- [Node.js](https://nodejs.org/) ≥ 18
+- [npm](https://www.npmjs.com/) or [pnpm](https://pnpm.io/)
+
+### Core Dependencies
+
+| Package     | Purpose                        |
+|-------------|--------------------------------|
+| `telegraf`  | Telegram Bot Framework         |
+| `ethers`    | EVM blockchain interaction     |
+| `axios`     | HTTP requests                  |
+| `dotenv`    | Environment variable management|
+
+## Installation
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/fizzar99/TegeSea.git
+cd TegeSea
 ```
-SeadropTG/
-├── src/
-│   ├── bot/                    # Telegram bot layer
-│   │   ├── bot.js
-│   │   └── commands/
-│   ├── mint/                   # Core minting engine
-│   │   ├── MintEngine.js
-│   │   ├── DropQueue.js
-│   │   ├── ParallelMinter.js
-│   │   └── KeyLoader.js
-│   └── seadrop/                # SeaDrop contract interaction
-├── config/
-│   ├── chains.js               # Chain to RPC mapping
-│   └── whitelist.js
-├── scripts/
-├── package.json
-└── README.md
+
+### 2. Install dependencies
+
+```bash
+npm install
 ```
 
-## Setup
+### 3. Setup environment variables
 
-### 1. Environment Variables
+```bash
+cp .env.example .env
+```
 
-Copy `.env.example` to `.env` and fill in the values:
+Edit `.env` and fill in your values:
 
 ```env
-# RPC Endpoints
+# RPC Endpoints (at least one required per chain you use)
 ETH_RPC=
 BASE_RPC=https://mainnet.base.org
 ARBITRUM_RPC=
@@ -49,17 +58,27 @@ POLYGON_RPC=
 BSC_RPC=
 
 # Telegram
-TELEGRAM_BOT_TOKEN=
-ALLOWED_USERS=123456789,987654321
+TELEGRAM_BOT_TOKEN=your_bot_token_here
+ALLOWED_USERS=123456789,987654321   # Comma separated Telegram user IDs
 
 # Gas Settings
 GAS_MULTIPLIER=1.5
 PRIORITY_FEE_GWEI=2
 ```
 
-### 2. Private Keys
+### 4. Add Private Keys
 
-Use the `/pk` command in Telegram to upload your `pk.txt` file (one private key per line).
+Use the `/pk` command in Telegram after starting the bot to upload your `pk.txt` file (one private key per line).
+
+## Usage
+
+### Start the bot
+
+```bash
+npm start
+# or
+npm run bot
+```
 
 ## Available Commands
 
@@ -99,4 +118,6 @@ Use the `/pk` command in Telegram to upload your `pk.txt` file (one private key 
 
 ## License
 
-MIT
+MIT License — see [LICENSE](LICENSE) file for details.
+
+Copyright (c) 2026 Fizzar

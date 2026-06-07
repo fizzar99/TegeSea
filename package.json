@@ -1,5 +1,5 @@
 {
-  "name": "seadrop-telegram-bot",
+  "name": "tegesea",
   "version": "1.0.0",
   "description": "SeaDrop Mint Engine with Telegram Bot integration",
   "main": "src/bot/bot.js",
