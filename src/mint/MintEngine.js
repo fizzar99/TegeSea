@@ -102,7 +102,7 @@ class MintEngine {
     for (const drop of pending) {
       try {
         if (!drop.mintTime || drop.mintTime === 0) {
-          const config = await this.discoverDrop(drop.contract);
+          const config = await this.minter.discover(drop.contract);
           drop.mintTime = config.startTime * 1000;
           this.queue._save();
           this.log('drop_discovered', { id: drop.id, startTime: config.startTime });

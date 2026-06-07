@@ -1,6 +1,7 @@
 const chains = require('../../../config/chains');
-const { MintEngine } = require('../../mint/MintEngine');
 const { loadPrivateKeys } = require('../../mint/KeyLoader');
+const ParallelMinter = require('../../mint/ParallelMinter');
+const { MintEngine } = require('../../mint/MintEngine');
 
 module.exports = (bot) => {
   bot.command('queue', async (ctx) => {
@@ -20,13 +21,16 @@ module.exports = (bot) => {
     try {
       const privateKeys = loadPrivateKeys();
       
+      // Use ParallelMinter directly for discovery (lighter)
+      const minter = new ParallelMinter({ rpcUrl, privateKeys });
+      const dropInfo = await minter.discover(contract);
+      
+      // Create engine only for queue management
       const engine = new MintEngine({
         rpcUrl,
         privateKeys,
       });
 
-      const dropInfo = await engine.minter.discover(contract);
-      
       const drop = engine.addDrop({
         contract,
         startTimeISO: new Date(dropInfo.startTime * 1000).toISOString(),

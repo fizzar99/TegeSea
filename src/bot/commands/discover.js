@@ -1,6 +1,6 @@
-const { MintEngine } = require('../../mint/MintEngine');
-const { loadPrivateKeys } = require('../../mint/KeyLoader');
 const chains = require('../../../config/chains');
+const { loadPrivateKeys } = require('../../mint/KeyLoader');
+const ParallelMinter = require('../../mint/ParallelMinter');
 
 module.exports = (bot) => {
   bot.command('discover', async (ctx) => {
@@ -18,9 +18,9 @@ module.exports = (bot) => {
 
     try {
       const privateKeys = loadPrivateKeys();
-      const engine = new MintEngine({ rpcUrl, privateKeys });
+      const minter = new ParallelMinter({ rpcUrl, privateKeys });
 
-      const info = await engine.minter.discover(contract);
+      const info = await minter.discover(contract);
 
       ctx.reply(
         `🔍 Discovered Drop on ${chainName}:\n\n` +

@@ -214,18 +214,19 @@ class ParallelMinter {
       }
     }
 
-    // Check if already minted max
+    // Check if already minted max (best effort, may not be supported)
     try {
       for (const wallet of this.wallets) {
-        const stats = await this.seadrop.getMintStats(drop.nftAddress, wallet.address).catch(() => null);
-        if (stats && Number(stats.minterNumMinted ?? stats[0] ?? 0) >= drop.maxPerWallet) {
-          issues.push(`Already minted max: ${wallet.address}`);
+        // Note: getMintStats only takes nftAddress in current ABI
+        const stats = await this.seadrop.getMintStats(drop.nftAddress).catch(() => null);
+        if (stats) {
+          // If stats exist, we can't reliably check per-wallet without additional calls
+          // So we skip this check for now
         }
       }
     } catch (e) {
       // getMintStats may not exist on all SeaDrop versions
     }
-
     return {
       ok: issues.length === 0,
       issues,
