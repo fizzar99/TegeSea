@@ -1,4 +1,4 @@
-const { DropQueue } = require('../../mint/DropQueue');
+const DropQueue = require('../../mint/DropQueue');
 const path = require('path');
 
 module.exports = (bot) => {

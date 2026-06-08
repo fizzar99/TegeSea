@@ -13,6 +13,7 @@ module.exports = (bot) => {
           bot.telegram.sendMessage(
             ctx.chat.id,
             `⏰ Alert: Drop #${drop.id} will start in ~${timeLeft} minutes!\n` +
+            `Chain: ${drop.chain || 'default'}\n` +
             `Contract: ${drop.contract}\n` +
             `Use /list to see details.`
           ).catch(console.error);
@@ -33,7 +34,9 @@ module.exports = (bot) => {
         '🚀 Auto monitoring started!\n\n' +
         '• You will receive alerts 10 minutes before each drop\n' +
         '• Drops will be minted automatically at T-0\n' +
-        '• Use /stop to stop monitoring'
+        '• Multi-chain drops are supported\n' +
+        '• Use /stop to stop monitoring\n' +
+        '• Use /status to check engine status'
       );
 
     } catch (err) {
@@ -42,8 +45,4 @@ module.exports = (bot) => {
       setEngine(null);
     }
   });
-
-  // Export for stop command
-  module.exports.getEngine = getEngine;
-  module.exports.setEngine = setEngine;
 };

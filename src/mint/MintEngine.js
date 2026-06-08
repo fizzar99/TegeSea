@@ -6,22 +6,26 @@ const path = require('path');
 const { JsonRpcProvider } = require('ethers');
 const DropQueue = require('./DropQueue');
 const ParallelMinter = require('./ParallelMinter');
-const { SEADROP_ADDRESS, SEADROP_ABI } = require('../seadrop/SeadropService');
 
 class MintEngine {
   constructor({
     rpcUrl,
     privateKeys,
-    gasMultiplier = 1.5,
-    priorityFeeGwei = 2,
-    queueFile = './drops.json',
-    logFile = './mint-log.jsonl',
-    pollIntervalMs = 500,
-    preTriggerOffsetMs = 500,
+    gasMultiplier = parseFloat(process.env.GAS_MULTIPLIER || '1.5'),
+    priorityFeeGwei = parseInt(process.env.PRIORITY_FEE_GWEI || '2'),
+    queueFile = process.env.QUEUE_FILE || './drops.json',
+    logFile = process.env.LOG_FILE || './mint-log.jsonl',
+    pollIntervalMs = parseInt(process.env.POLL_INTERVAL_MS || '500'),
+    preTriggerOffsetMs = parseInt(process.env.PRE_TRIGGER_OFFSET_MS || '500'),
     jitterMsMax = 500,
     onAlert = null,
     onComplete = null,
   }) {
+    this.defaultRpcUrl = rpcUrl;
+    this.privateKeys = privateKeys;
+    this.gasMultiplier = gasMultiplier;
+    this.priorityFeeGwei = priorityFeeGwei;
+
     this.provider = new JsonRpcProvider(rpcUrl);
     this.minter = new ParallelMinter({
       rpcUrl,
@@ -29,6 +33,11 @@ class MintEngine {
       gasMultiplier,
       priorityFeeGwei,
     });
+
+    // Cache of ParallelMinter per rpcUrl for multi-chain
+    this._minterCache = new Map();
+    this._minterCache.set(rpcUrl, this.minter);
+
     this.queue = new DropQueue(queueFile);
     this.logFile = path.resolve(logFile);
     this.pollIntervalMs = pollIntervalMs;
@@ -41,6 +50,24 @@ class MintEngine {
     this.alertSent = new Set(); // Track which drops have sent 10-min alert
   }
 
+  /**
+   * Get or create a ParallelMinter for the given rpcUrl.
+   * Falls back to default minter if no rpcUrl specified.
+   */
+  _getMinter(rpcUrl) {
+    if (!rpcUrl) return this.minter;
+    if (this._minterCache.has(rpcUrl)) return this._minterCache.get(rpcUrl);
+
+    const minter = new ParallelMinter({
+      rpcUrl,
+      privateKeys: this.privateKeys,
+      gasMultiplier: this.gasMultiplier,
+      priorityFeeGwei: this.priorityFeeGwei,
+    });
+    this._minterCache.set(rpcUrl, minter);
+    return minter;
+  }
+
   log(event, data = {}) {
     const entry = JSON.stringify({
       ts: new Date().toISOString(),
@@ -51,13 +78,23 @@ class MintEngine {
     console.log(`[LOG] ${event}`, data);
   }
 
-  addDrop({ contract, startTimeISO, notes = '' }) {
+  /**
+   * Discover drop config from on-chain data.
+   */
+  async discoverDrop(contract, rpcUrl) {
+    const minter = this._getMinter(rpcUrl);
+    return minter.discover(contract);
+  }
+
+  addDrop({ contract, chain, rpcUrl, startTimeISO, notes = '' }) {
     const drop = this.queue.add({
       contract,
+      chain,
+      rpcUrl,
       mintTimeISO: startTimeISO,
       notes,
     });
-    this.log('drop_queued', { id: drop.id, contract, startTime: startTimeISO });
+    this.log('drop_queued', { id: drop.id, contract, chain, startTime: startTimeISO });
     return drop;
   }
 
@@ -102,7 +139,8 @@ class MintEngine {
     for (const drop of pending) {
       try {
         if (!drop.mintTime || drop.mintTime === 0) {
-          const config = await this.minter.discover(drop.contract);
+          const minter = this._getMinter(drop.rpcUrl);
+          const config = await minter.discover(drop.contract);
           drop.mintTime = config.startTime * 1000;
           this.queue._save();
           this.log('drop_discovered', { id: drop.id, startTime: config.startTime });
@@ -152,20 +190,22 @@ class MintEngine {
     this.queue.updateStatus(drop.id, 'monitoring');
     console.log(`\n[ENGINE] 🔥 FIRING DROP ${drop.id}`);
     console.log(`  Contract: ${drop.contract}`);
+    console.log(`  Chain: ${drop.chain || 'default'}`);
     console.log(`  T-0: ${new Date(drop.mintTime).toISOString()}`);
-    this.log('drop_firing', { id: drop.id, contract: drop.contract });
+    this.log('drop_firing', { id: drop.id, contract: drop.contract, chain: drop.chain });
 
     try {
-      const config = await this.minter.discover(drop.contract);
+      const minter = this._getMinter(drop.rpcUrl);
+      const config = await minter.discover(drop.contract);
       console.log(`  Mint price: ${Number(config.mintPrice) / 1e18} ETH | Max/wallet: ${config.maxPerWallet}`);
 
-      const preflight = await this.minter.preflight(config, 1);
+      const preflight = await minter.preflight(config, 1);
       if (!preflight.ok) {
         console.warn(`[ENGINE] Pre-flight warnings:`);
         preflight.issues.forEach(i => console.warn(`  ! ${i}`));
       }
 
-      const results = await this.minter.fire(config, 1);
+      const results = await minter.fire(config, 1);
 
       this.queue.updateStatus(drop.id, 'fired', results.results);
       this.log('drop_complete', {
@@ -187,10 +227,11 @@ class MintEngine {
     }
   }
 
-  async fireNow(contract) {
-    const config = await this.minter.discover(contract);
+  async fireNow(contract, rpcUrl) {
+    const minter = this._getMinter(rpcUrl);
+    const config = await minter.discover(contract);
     console.log(`[ENGINE] Manual fire for ${contract}`);
-    return this.minter.fire(config, 1);
+    return minter.fire(config, 1);
   }
 }
 

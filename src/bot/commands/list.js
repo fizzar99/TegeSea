@@ -1,4 +1,4 @@
-const { DropQueue } = require('../../mint/DropQueue');
+const DropQueue = require('../../mint/DropQueue');
 const path = require('path');
 
 module.exports = (bot) => {
@@ -14,8 +14,9 @@ module.exports = (bot) => {
 
       let message = '📋 Queued Drops:\n\n';
       drops.forEach(d => {
-        const time = new Date(d.mintTime).toISOString();
-        message += `• ${d.id} | ${d.contract} | ${time} | ${d.status}\n`;
+        message += `• [${d.status}] ${d.chain} | ${d.contract.slice(0, 10)}...\n`;
+        message += `  ID: ${d.id}\n`;
+        message += `  Time: ${d.mintTime}\n\n`;
       });
 
       ctx.reply(message);

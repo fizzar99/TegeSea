@@ -4,8 +4,7 @@ const { Telegraf } = require('telegraf');
 const fs = require('fs');
 const path = require('path');
 const axios = require('axios');
-
-const chains = require('../../../config/chains');
+const { getEngine, setEngine } = require('./engineManager');
 
 const allowedUsers = (process.env.ALLOWED_USERS || '')
   .split(',')
@@ -36,6 +35,7 @@ require('./commands/fire')(bot);
 require('./commands/discover')(bot);
 require('./commands/auto')(bot);
 require('./commands/stop')(bot);
+require('./commands/status')(bot);
 
 // /start command
 bot.start((ctx) => {
@@ -49,6 +49,7 @@ bot.start((ctx) => {
     '/discover <chain> <contract>\n' +
     '/auto - Start auto monitoring\n' +
     '/stop - Stop monitoring\n' +
+    '/status - Check engine status\n' +
     '/pk - Upload private keys file'
   );
 });
@@ -69,10 +70,28 @@ bot.on('document', async (ctx) => {
     const response = await axios.get(fileLink, { responseType: 'text' });
     const content = response.data;
 
+    // Validate private keys
+    const lines = content.split('\n').map(l => l.trim()).filter(l => l.length > 0 && !l.startsWith('#'));
+    if (lines.length === 0) {
+      return ctx.reply('❌ File is empty or contains no valid keys.');
+    }
+
+    const validKeyPattern = /^(0x)?[0-9a-fA-F]{64}$/;
+    const invalidLines = [];
+    lines.forEach((line, i) => {
+      if (!validKeyPattern.test(line)) {
+        invalidLines.push(i + 1);
+      }
+    });
+
+    if (invalidLines.length > 0) {
+      return ctx.reply(`❌ Invalid private key format on line(s): ${invalidLines.join(', ')}.\nExpected: 64 hex characters (with optional 0x prefix).`);
+    }
+
     const pkPath = path.join(process.cwd(), 'pk.txt');
     fs.writeFileSync(pkPath, content);
 
-    ctx.reply('✅ Private keys have been added');
+    ctx.reply(`✅ ${lines.length} private key(s) saved successfully.`);
   } catch (err) {
     ctx.reply('❌ Failed to save private keys.');
     console.error(err);
@@ -88,5 +107,20 @@ bot.catch((err, ctx) => {
 bot.launch();
 console.log('🤖 Telegram bot started');
 
-process.once('SIGINT', () => bot.stop('SIGINT'));
-process.once('SIGTERM', () => bot.stop('SIGTERM'));
+// Graceful shutdown — stop engine + bot
+process.once('SIGINT', () => {
+  const engine = getEngine();
+  if (engine) {
+    engine.stop();
+    setEngine(null);
+  }
+  bot.stop('SIGINT');
+});
+process.once('SIGTERM', () => {
+  const engine = getEngine();
+  if (engine) {
+    engine.stop();
+    setEngine(null);
+  }
+  bot.stop('SIGTERM');
+});

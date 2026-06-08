@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
- * cli.js — Command-line interface for the OpenSea FCFS Mint Engine
+ * cli.js — Command-line interface for the SeaDrop FCFS Mint Engine
  */
 const { loadPrivateKeys } = require('../mint/KeyLoader');
-const MintEngine = require('../mint/MintEngine');
+const { MintEngine } = require('../mint/MintEngine');
 
 const config = {
   rpcUrl: process.env.RPC_URL,
@@ -122,8 +122,8 @@ async function run() {
         console.log('Usage: node cli.js preflight <contract>');
         process.exit(1);
       }
-      const config = await engine.discoverDrop(contract);
-      const preflight = await engine.minter.preflight(config, 1);
+      const dropConfig = await engine.discoverDrop(contract);
+      const preflight = await engine.minter.preflight(dropConfig, 1);
       if (preflight.ok) {
         console.log('✅ All checks passed. Ready to fire.');
       } else {
@@ -135,7 +135,7 @@ async function run() {
 
     case 'start':
     default:
-      console.log('🚀 Starting OpenSea FCFS Mint Engine...');
+      console.log('🚀 Starting SeaDrop FCFS Mint Engine...');
       console.log(`   RPC: ${config.rpcUrl}`);
       console.log(`   Wallets: ${config.privateKeys.length}`);
       console.log(`   Gas multiplier: ${config.gasMultiplier}x`);

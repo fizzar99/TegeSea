@@ -1,7 +1,8 @@
 const chains = require('../../../config/chains');
 const { loadPrivateKeys } = require('../../mint/KeyLoader');
 const ParallelMinter = require('../../mint/ParallelMinter');
-const { DropQueue } = require('../../mint/DropQueue');
+const DropQueue = require('../../mint/DropQueue');
+const { isValidAddress } = require('../../utils/validate');
 const path = require('path');
 
 module.exports = (bot) => {
@@ -13,6 +14,11 @@ module.exports = (bot) => {
     }
 
     const [chainName, contract] = args;
+
+    if (!isValidAddress(contract)) {
+      return ctx.reply('❌ Invalid contract address. Must be 0x followed by 40 hex characters.');
+    }
+
     const rpcUrl = chains[chainName.toLowerCase()];
 
     if (!rpcUrl) {
@@ -30,10 +36,12 @@ module.exports = (bot) => {
       const queueFile = path.resolve(process.cwd(), 'drops.json');
       const queue = new DropQueue(queueFile);
 
-      const id = `${contract.toLowerCase()}_${Date.now()}`;
       const drop = queue.add({
         contract,
+        chain: chainName.toLowerCase(),
+        rpcUrl,
         mintTimeISO: new Date(dropInfo.startTime * 1000).toISOString(),
+        maxPerWallet: dropInfo.maxPerWallet,
         notes: `Queued via Telegram on ${chainName}`,
       });
 

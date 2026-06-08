@@ -90,6 +90,8 @@ npm run bot
 | `/fire <chain> <contract>`           | Immediate mint (bypasses queue) |
 | `/discover <chain> <contract>`       | Check drop information on-chain |
 | `/auto`                              | Start monitoring engine + 10-min alerts |
+| `/stop`                              | Stop monitoring engine |
+| `/status`                            | Check engine & queue status |
 | `/pk`                                | Upload private keys file |
 | `/start`                             | Show help message |
 
@@ -103,12 +105,13 @@ npm run bot
 
 ## How It Works
 
-1. User queues a drop using `/queue`
+1. User queues a drop using `/queue` (chain + contract address)
 2. Bot automatically discovers start time from the SeaDrop contract
-3. When `/auto` is activated, the engine monitors all queued drops
-4. 10 minutes before a drop starts → user receives an alert
-5. At T-0, all wallets fire simultaneously
-6. After minting completes → user receives a summary report
+3. Chain and RPC info are stored per-drop for multi-chain support
+4. When `/auto` is activated, the engine monitors all queued drops
+5. 10 minutes before a drop starts → user receives an alert
+6. At T-0, all wallets fire simultaneously on the correct chain
+7. After minting completes → user receives a summary report
 
 ## Security
 

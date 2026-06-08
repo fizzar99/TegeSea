@@ -1,6 +1,7 @@
 const { MintEngine } = require('../../mint/MintEngine');
 const { loadPrivateKeys } = require('../../mint/KeyLoader');
 const chains = require('../../../config/chains');
+const { isValidAddress } = require('../../utils/validate');
 
 module.exports = (bot) => {
   bot.command('fire', async (ctx) => {
@@ -10,6 +11,11 @@ module.exports = (bot) => {
     }
 
     const [chainName, contract] = args;
+
+    if (!isValidAddress(contract)) {
+      return ctx.reply('❌ Invalid contract address. Must be 0x followed by 40 hex characters.');
+    }
+
     const rpcUrl = chains[chainName.toLowerCase()];
 
     if (!rpcUrl) {
@@ -26,7 +32,7 @@ module.exports = (bot) => {
       
       ctx.reply(`🔥 Firing mint for ${contract} on ${chainName}...`);
 
-      const results = await engine.fireNow(contract);
+      const results = await engine.fireNow(contract, rpcUrl);
 
       ctx.reply(
         `📊 Mint Results:\n` +
